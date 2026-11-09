@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>절대궤도 | 작전명: 아폴로니우스의 원</title>
+<style>
+:root{--bg:#07111f;--panel:#101f33;--panel2:#0b1829;--line:#233b57;--cyan:#59e1ff;--blue:#5d91ff;--orange:#ffb45d;--green:#65e6a6;--red:#ff737d;--muted:#9bb0c8;--white:#edf6ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -10%,#173354 0,#07111f 55%);color:var(--white);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:24px 18px 36px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}
+.kicker{font-size:11px;letter-spacing:.2em;color:var(--cyan);font-weight:800}
+h1{font-size:clamp(25px,5vw,43px);line-height:1.1;margin:7px 0 5px;letter-spacing:-.04em}
+.sub{color:var(--muted);font-size:13px}
+.stamp{border:1px solid #3c6585;border-radius:10px;padding:9px 12px;color:var(--cyan);font-size:11px;letter-spacing:.12em;white-space:nowrap}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.8fr);gap:15px}
+.panel{background:linear-gradient(160deg,rgba(18,37,59,.97),rgba(9,23,39,.97));border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 16px 45px #0004}
+.panelhead{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panelhead strong{font-size:13px;letter-spacing:.08em}
+.live{font-size:10px;color:var(--green);letter-spacing:.12em}
+.canvasbox{padding:10px;background:#071321}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:#091727;touch-action:none;cursor:crosshair}
+.hint{padding:10px 15px;color:var(--muted);font-size:12px;line-height:1.55}
+.controls{padding:15px;display:grid;gap:14px}
+.control label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;color:#d9e9f8}
+.control output{color:var(--cyan);font-weight:800;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{border:0;border-radius:10px;padding:12px 10px;font-weight:800;cursor:pointer;font-size:13px}
+.primary{background:linear-gradient(100deg,#38c9ed,#668eff);color:#041321}
+.secondary{background:#1a304a;color:#dcecff;border:1px solid #35516f}
+button:hover{filter:brightness(1.1)}button:active{transform:translateY(1px)}
+.status{border:1px solid #29435f;background:#09192b;border-radius:12px;padding:12px}
+.status small{display:block;color:var(--muted);font-size:10px;letter-spacing:.12em;margin-bottom:5px}
+#message{font-weight:750;font-size:14px;line-height:1.45}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:#0a192a;border:1px solid #203b57;border-radius:10px;padding:10px}
+.metric span{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}
+.metric b{font-size:16px;color:var(--white);font-variant-numeric:tabular-nums}
+.math{padding:14px 15px;border-top:1px solid var(--line);color:#c7d9eb;font-size:12px;line-height:1.7}
+.formula{font-family:Georgia,serif;font-size:17px;color:var(--cyan);text-align:center;padding:7px 0}
+.footer{color:#7189a4;font-size:11px;text-align:center;margin-top:14px;line-height:1.6}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.stamp{display:none}.controls{gap:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div><div class="kicker">MATHEMATICS SIMULATION / 01</div><h1>절대궤도</h1><div class="sub">작전명: 아폴로니우스의 원 · 두 점의 동시 도착 퍼즐</div></div>
+ <div class="stamp">APOLLONIUS PROTOCOL</div>
+</header>
+<div class="layout">
+<section class="panel">
+ <div class="panelhead"><strong>전술 좌표 화면</strong><span class="live">● SIMULATION ONLINE</span></div>
+ <div class="canvasbox"><canvas id="board" width="900" height="560" aria-label="아폴로니우스의 원 시뮬레이션 좌표 화면"></canvas></div>
+ <div class="hint">화면 아래쪽의 파란 출발점 S에서 원하는 방향으로 드래그해 경로를 정하세요. 점선 경로가 아폴로니우스의 원과 만나면 분석할 수 있습니다.</div>
+</section>
+<aside class="panel">
+ <div class="panelhead"><strong>시뮬레이션 설정</strong><span class="live">CONTROL</span></div>
+ <div class="controls">
+  <div class="control"><label for="va">물체 A의 속도 <output id="vao">3.0</output></label><input id="va" type="range" min="1" max="5" step=".5" value="3"></div>
+  <div class="control"><label for="vb">물체 B의 속도 <output id="vbo">2.0</output></label><input id="vb" type="range" min="1" max="5" step=".5" value="2"></div>
+  <div class="metrics">
+   <div class="metric"><span>속도 비율 A : B</span><b id="ratio">1.50 : 1</b></div>
+   <div class="metric"><span>거리 비율 PA : PB</span><b id="dratio">1.50 : 1</b></div>
+  </div>
+  <div class="actions"><button class="primary" id="analyze">경로 분석</button><button class="secondary" id="reset">초기화</button></div>
+  <div class="status"><small>MISSION STATUS</small><div id="message" aria-live="polite">출발점 S에서 경로를 드래그한 뒤 분석을 시작하세요.</div></div>
+  <div class="math">
+   <b style="color:#edf6ff">핵심 원리</b>
+   <div class="formula">PA / v<sub>A</sub> = PB / v<sub>B</sub></div>
+   동시에 도착하려면 두 이동 시간이 같아야 합니다. 따라서
+   <div class="formula">PA / PB = v<sub>A</sub> / v<sub>B</sub></div>
+   이 비율을 만족하는 점들의 자취가 아폴로니우스의 원입니다.
+  </div>
+ </div>
+</aside>
+</div>
+<div class="footer">교육용 수학 시뮬레이션 · 실제 무기나 실제 요격 상황을 모델링하지 않는 추상적인 동시 도착 퍼즐입니다.</div>
+</div>
+<script>
+(()=>{
+const c=document.getElementById('board'),ctx=c.getContext('2d');
+const A={x:150,y:245},B={x:750,y:245},S={x:390,y:500};
+const $=id=>document.getElementById(id);
+let aim={x:650,y:390},drag=false,solution=null,animStart=0,animating=false,animP=null;
+const va=$('va'),vb=$('vb');
+function ratio(){return +va.value/+vb.value}
+function circle(){
+ const k=ratio(),d=B.x-A.x;
+ if(Math.abs(k-1)<1e-8)return {line:true,x:(A.x+B.x)/2};
+ const cx=A.x+(k*k*d)/(k*k-1),r=Math.abs(k*d/(k*k-1));
+ return {line:false,x:cx,y:A.y,r};
+}
+function intersections(){
+ const dx=aim.x-S.x,dy=aim.y-S.y, norm=Math.hypot(dx,dy)||1,ux=dx/norm,uy=dy/norm;
+ const q=circle();
+ if(q.line){
+  if(Math.abs(ux)<1e-8)return [];
+  const t=(q.x-S.x)/ux;return t>0?[{x:S.x+t*ux,y:S.y+t*uy}]:[];
+ }
+ const ox=S.x-q.x,oy=S.y-q.y;
+ const b=2*(ox*ux+oy*uy),cc=ox*ox+oy*oy-q.r*q.r,disc=b*b-4*cc;
+ if(disc<0)return [];
+ const root=Math.sqrt(Math.max(0,disc)),ts=[(-b-root)/2,(-b+root)/2].filter(t=>t>0).sort((a,b)=>a-b);
+ return ts.map(t=>({x:S.x+t*ux,y:S.y+t*uy}));
+}
+function drawGrid(){
+ ctx.fillStyle='#091727';ctx.fillRect(0,0,900,560);
+ ctx.strokeStyle='rgba(87,137,178,.13)';ctx.lineWidth=1;
+ for(let x=30;x<900;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,560);ctx.stroke()}
+ for(let y=20;y<560;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke()}
+ ctx.strokeStyle='rgba(102,163,204,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,530);ctx.lineTo(900,530);ctx.stroke();
+}
+function drawCircle(){
+ const q=circle();ctx.save();ctx.strokeStyle='rgba(89,225,255,.8)';ctx.lineWidth=2.5;ctx.setLineDash([9,7]);
+ if(q.line){ctx.beginPath();ctx.moveTo(q.x,0);ctx.lineTo(q.x,560);ctx.stroke()}
+ else {ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.stroke()}
+ ctx.restore();
+}
+function point(p,color,label,rad=8){
+ ctx.beginPath();ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.arc(p.x,p.y,rad,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+ ctx.fillStyle='#edf6ff';ctx.font='bold 16px system-ui';ctx.fillText(label,p.x+13,p.y-12);
+}
+function draw(){
+ drawGrid();
+ // A/B and start point
+ drawCircle();
+ ctx.strokeStyle='rgba(255,180,93,.2)';ctx.lineWidth=1.5;ctx.setLineDash([4,8]);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();ctx.setLineDash([]);
+ const ints=intersections();
+ ctx.strokeStyle='rgba(89,225,255,.8)';ctx.lineWidth=2;ctx.setLineDash([8,7]);ctx.beginPath();ctx.moveTo(S.x,S.y);ctx.lineTo(aim.x,aim.y);ctx.stroke();ctx.setLineDash([]);
+ if(solution){ctx.strokeStyle='rgba(101,230,166,.45)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(solution.x,solution.y);ctx.moveTo(B.x,B.y);ctx.lineTo(solution.x,solution.y);ctx.stroke()}
+ if(animP){point(animP.a,'#ffb45d','A 이동');point(animP.b,'#5d91ff','B 이동')}
+ if(solution){ctx.beginPath();ctx.fillStyle='#65e6a6';ctx.shadowColor='#65e6a6';ctx.shadowBlur=18;ctx.arc(solution.x,solution.y,9,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#65e6a6';ctx.font='bold 15px system-ui';ctx.fillText('동시 도착점 P',solution.x+14,solution.y+22)}
+ point(A,'#ffb45d','A');point(B,'#5d91ff','B');point(S,'#59e1ff','S',9);
+ ctx.fillStyle='#9bb0c8';ctx.font='12px system-ui';ctx.fillText('A 출발점',A.x-22,A.y+30);ctx.fillText('B 출발점',B.x-22,B.y+30);
+ if(!solution&&ints.length===0){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='13px system-ui';ctx.fillText('경로를 드래그해 원과 만나게 해보세요',310,65)}
+ if(solution){ctx.fillStyle='#65e6a6';ctx.font='bold 13px system-ui';ctx.fillText('P = ('+solution.x.toFixed(1)+', '+solution.y.toFixed(1)+')',solution.x+14,solution.y-4)}
+}
+function updateLabels(){
+ $('vao').textContent=(+va.value).toFixed(1);$('vbo').textContent=(+vb.value).toFixed(1);
+ $('ratio').textContent=ratio().toFixed(2)+' : 1';$('dratio').textContent=ratio().toFixed(2)+' : 1';
+ solution=null;animating=false;animP=null;$('message').textContent='속도가 변경됐습니다. 새 경로를 선택하고 분석하세요.';draw();
+}
+va.addEventListener('input',updateLabels);vb.addEventListener('input',updateLabels);
+function canvasPos(e){const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}
+c.addEventListener('pointerdown',e=>{drag=true;c.setPointerCapture(e.pointerId);aim=canvasPos(e);solution=null;animating=false;animP=null;draw()});
+c.addEventListener('pointermove',e=>{if(!drag)return;aim=canvasPos(e);draw()});
+c.addEventListener('pointerup',e=>{if(drag){aim=canvasPos(e);drag=false;draw()}});
+function animate(p){
+ const da=Math.hypot(p.x-A.x,p.y-A.y),db=Math.hypot(p.x-B.x,p.y-B.y);
+ const ta=da/(+va.value),tb=db/(+vb.value),duration=2100,start=performance.now();
+ animating=true;
+ function frame(now){
+  const f=Math.min(1,(now-start)/duration);
+  animP={a:{x:A.x+(p.x-A.x)*f,y:A.y+(p.y-A.y)*f},b:{x:B.x+(p.x-B.x)*f,y:B.y+(p.y-B.y)*f}};
+  draw();
+  if(f<1)requestAnimationFrame(frame);else{animating=false;animP=null;draw();$('message').textContent='동시 도착 성공! 두 이동 시간이 같습니다. ('+ta.toFixed(2)+' / '+tb.toFixed(2)+' 단위 시간)'}
+ }
+ requestAnimationFrame(frame);
+}
+$('analyze').addEventListener('click',()=>{
+ if(animating)return;
+ const hits=intersections();
+ if(!hits.length){solution=null;animP=null;$('message').textContent='경로가 원과 만나지 않습니다. 파란 출발점 S에서 다른 방향으로 드래그해 보세요.';draw();return}
+ solution=hits[0];draw();
+ const da=Math.hypot(solution.x-A.x,solution.y-A.y),db=Math.hypot(solution.x-B.x,solution.y-B.y);
+ const ta=da/(+va.value),tb=db/(+vb.value);
+ $('message').textContent='교점 발견! 두 이동 시간이 '+ta.toFixed(2)+' / '+tb.toFixed(2)+'로 거의 같습니다. 이동을 재생합니다.';
+ animate(solution);
+});
+$('reset').addEventListener('click',()=>{va.value=3;vb.value=2;aim={x:650,y:390};solution=null;animating=false;animP=null;updateLabels();$('message').textContent='초기화 완료. 경로를 드래그해 분석을 시작하세요.'});
+updateLabels();draw();
+})();
+</script>
+</body>
+</html>
