@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>APOLLONIUS LOCK-ON | Geometry Lab</title>
+<style>
+:root{--bg:#07121b;--panel:#0d202c;--line:#244454;--cyan:#5ce7f0;--green:#7bf2ad;--red:#ff7d86;--muted:#91aab5;--white:#eaf5f7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#163548 0,#07121b 60%);color:var(--white);font-family:ui-monospace,Consolas,monospace}
+main{max-width:1160px;margin:auto;padding:20px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line)}
+.kicker{font-size:11px;letter-spacing:3px;color:var(--cyan)}h1{font-size:clamp(24px,4vw,40px);margin:7px 0 3px;letter-spacing:1px}.sub{font-size:12px;color:var(--muted)}
+.status{font-size:11px;color:var(--green);border:1px solid #326052;padding:9px 11px;white-space:nowrap}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:15px;margin-top:16px}.panel{background:linear-gradient(145deg,#102a39ee,#091a26f5);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 10px 34px #0004}
+canvas{display:block;width:100%;height:auto;background:#081923;border-radius:8px;cursor:crosshair;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:13px;margin:10px 2px 0;color:var(--muted);font-size:10px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.side{display:flex;flex-direction:column;gap:12px}.label{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:8px}.ratio{font-size:25px;font-weight:bold;color:var(--green);margin:8px 0}.small{font-size:11px;color:var(--muted);line-height:1.65}.metric{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #1d3a49;padding:8px 0;font-size:11px}.metric span{color:var(--muted)}.metric strong{color:var(--white)}
+.big{font-size:27px;color:var(--cyan);font-weight:bold}.row{display:flex;align-items:end;justify-content:space-between;gap:8px}
+button{border:1px solid #397286;background:#103548;color:var(--cyan);padding:11px 12px;border-radius:7px;font:700 11px ui-monospace,monospace;letter-spacing:.5px;cursor:pointer}button:hover{background:#17495b}button.primary{background:var(--cyan);color:#07151c;border-color:var(--cyan)}button:disabled{opacity:.35;cursor:not-allowed}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.full{width:100%;margin-top:8px}
+#message{min-height:54px;padding:10px;border:1px solid #244454;border-radius:7px;background:#081923;color:#c7dce2;font-size:11px;line-height:1.65}#message.good{border-color:#347b5a;color:var(--green)}#message.bad{border-color:#82444c;color:#ff9ca3}
+.progress{height:5px;background:#1a3543;border-radius:8px;overflow:hidden;margin-top:8px}#bar{height:100%;width:100%;background:var(--cyan);transition:width .2s}
+.equation{display:none;margin-top:12px;border:1px solid #356073;background:#081923;border-radius:8px;padding:12px}.equation.show{display:block}.eq{color:var(--cyan);font-size:13px;line-height:1.9;overflow-wrap:anywhere}.inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:9px}input{min-width:0;width:100%;background:#06131c;border:1px solid #315263;border-radius:6px;color:white;padding:9px;font:12px ui-monospace,monospace}
+footer{text-align:center;color:#6d8792;font-size:10px;line-height:1.7;margin:14px 0 4px}
+@media(max-width:800px){main{padding:12px}.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}header{align-items:flex-start}.status{font-size:9px}.inputs{grid-template-columns:1fr 1fr}.inputs button{grid-column:1/-1}}
+</style></head>
+<body><main>
+<header><div><div class="kicker">TACTICAL GEOMETRY / INTERACTIVE LAB</div><h1>APOLLONIUS LOCK-ON</h1><div class="sub">작전명 APOLLO · 거리비의 궤적을 추적하라</div></div><div class="status" id="status">● SYSTEM READY</div></header>
+<div class="layout">
+<section class="panel"><canvas id="field" width="840" height="570"></canvas><div class="legend">
+<span><i class="dot" style="background:#ff7d86"></i>기준점 A</span><span><i class="dot" style="background:#5ce7f0"></i>기준점 B</span><span><i class="dot" style="background:#7bf2ad"></i>조건 만족 지점</span><span><i class="dot" style="background:#ff7d86"></i>조건 불일치</span><span><i class="dot" style="background:#f8d477"></i>움직이는 궤도 점</span>
+</div></section>
+<aside class="side">
+<section class="panel"><div class="label">RANDOM MISSION</div><div class="small">두 기준점 A, B와 거리 비율이 무작위로 정해집니다.</div><div class="ratio" id="ratioText">PA : PB = 1 : 2</div><div class="metric"><span>기준점 A</span><strong id="aText">(−3, 0)</strong></div><div class="metric"><span>기준점 B</span><strong id="bText">(3, 0)</strong></div><div class="metric"><span>목표 PA/PB</span><strong id="targetText">0.500</strong></div></section>
+<section class="panel"><div class="label">MISSION STATUS</div><div class="row"><div class="big" id="count">00 / 03</div><div class="small" id="timer">45 SEC</div></div><div class="progress"><div id="bar"></div></div><div class="metric"><span>최근 거리 비율</span><strong id="lastRatio">—</strong></div><div class="metric"><span>시도 횟수</span><strong id="attempts">0</strong></div></section>
+<section class="panel wide"><div class="label">COMMAND LOG</div><div id="message">작전 시작을 누르고, 좌표평면에서 목표 거리 비율을 만족하는 점을 찾아보세요.</div><div class="actions" style="margin-top:9px"><button class="primary" id="start">새 작전 시작</button><button id="reset">초기화</button></div><button id="orbit" class="full" disabled>궤도 시뮬레이션 재생</button><button id="equationBtn" class="full" disabled>수식으로 풀기 모드</button>
+<div class="equation" id="equationBox"><div class="label">ANALYTICAL SOLVER / 원의 방정식</div><div class="small">거리의 비율을 제곱해 정리하면 원의 방정식을 얻을 수 있습니다.</div><div class="eq" id="eqLine1"></div><div class="eq" id="eqLine2"></div><div class="small" style="margin-top:7px">좌표 (x, y)를 입력해 조건을 만족하는지 확인해 보세요. 원 위의 점이면 통과합니다.</div><div class="inputs"><input id="xInput" type="number" step="0.1" placeholder="x 좌표"><input id="yInput" type="number" step="0.1" placeholder="y 좌표"><button id="checkXY">검사</button></div><div class="small" id="solverResult" style="margin-top:8px"></div></div>
+</section></aside></div>
+<footer>수학적 거리비와 기하학적 자취를 탐구하는 교육용 시뮬레이션입니다. 실제 무기나 유도 시스템을 모델링하지 않습니다.</footer>
+</main>
+<script>
+const c=document.getElementById('field'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+const $=id=>document.getElementById(id);
+const ratios=[[1,2],[2,1],[1,3],[3,1],[2,3],[3,2],[1,4],[4,1]];
+let d=3,m=1,n=2,A={x:-3,y:0},B={x:3,y:0},h=0,r=1,xmin=-12,xmax=12,ymax=9;
+let points=[],running=false,failed=false,orbitOn=false,orbitAngle=0,raf=null,timer=null,timeLeft=45,attempts=0;
+const tol=.045;
+function calc(){let den=n*n-m*m;h=-d*(n*n+m*m)/den;r=2*d*m*n/Math.abs(den);xmin=Math.min(-d,h-r)-2;xmax=Math.max(d,h+r)+2;ymax=Math.max(8,r+2);A={x:-d,y:0};B={x:d,y:0}}
+function sx(x){return (x-xmin)/(xmax-xmin)*W}
+function sy(y){return (ymax-y)/(2*ymax)*H}
+function pointAt(a){return {x:h+r*Math.cos(a),y:r*Math.sin(a)}}
+function dist(p,q){return Math.hypot(p.x-q.x,p.y-q.y)}
+function ratio(p){return dist(p,A)/dist(p,B)}
+function fmt(v){return (Math.round(v*100)/100).toString().replace('-','−')}
+function draw(){
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#081923';ctx.fillRect(0,0,W,H);
+ let xstep=(xmax-xmin)>28?4:2,ystep=ymax>13?4:2;
+ for(let x=Math.ceil(xmin/xstep)*xstep;x<=xmax;x+=xstep){ctx.beginPath();ctx.strokeStyle=x===0?'#426b7b':'#183543';ctx.lineWidth=x===0?1.8:1;ctx.moveTo(sx(x),0);ctx.lineTo(sx(x),H);ctx.stroke();ctx.fillStyle='#7895a2';ctx.font='11px monospace';ctx.fillText(x,sx(x)+3,sy(0)+15)}
+ for(let y=-Math.floor(ymax/ystep)*ystep;y<=ymax;y+=ystep){ctx.beginPath();ctx.strokeStyle=y===0?'#426b7b':'#183543';ctx.lineWidth=y===0?1.8:1;ctx.moveTo(0,sy(y));ctx.lineTo(W,sy(y));ctx.stroke();if(y!==0){ctx.fillStyle='#7895a2';ctx.font='11px monospace';ctx.fillText(y,sx(0)+7,sy(y)-4)}}
+ ctx.fillStyle='#91aeb9';ctx.font='12px monospace';ctx.fillText('x',W-16,sy(0)-9);ctx.fillText('y',sx(0)+9,14);
+ // orbit path appears after first successful capture or in solver/reveal
+ if(points.some(p=>p.ok)||orbitOn){ctx.beginPath();ctx.ellipse(sx(h),sy(0),r/(xmax-xmin)*W,r/(2*ymax)*H,0,0,Math.PI*2);ctx.strokeStyle='#56dfe8';ctx.lineWidth=2;ctx.setLineDash([7,6]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#56dfe8';ctx.font='11px monospace';ctx.fillText('APOLLONIUS LOCUS',Math.max(8,sx(h)-65),Math.max(16,sy(r)-12))}
+ drawMark(A,'A','#ff7d86');drawMark(B,'B','#5ce7f0');
+ points.forEach((p,i)=>{ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),7,0,Math.PI*2);ctx.fillStyle=p.ok?'#7bf2ad':'#ff7d86';ctx.fill();ctx.strokeStyle='#eaf5f7';ctx.stroke();ctx.fillStyle='#eaf5f7';ctx.font='11px monospace';ctx.fillText('P'+(i+1),sx(p.x)+9,sy(p.y)-8)});
+ if(orbitOn){let q=pointAt(orbitAngle);ctx.beginPath();ctx.arc(sx(q.x),sy(q.y),7,0,Math.PI*2);ctx.fillStyle='#f8d477';ctx.shadowColor='#f8d477';ctx.shadowBlur=15;ctx.fill();ctx.shadowBlur=0;ctx.beginPath();ctx.moveTo(sx(h),sy(0));ctx.lineTo(sx(q.x),sy(q.y));ctx.strokeStyle='#f8d47777';ctx.stroke()}
+}
+function drawMark(p,t,col){ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),8,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.stroke();ctx.fillStyle=col;ctx.font='bold 14px monospace';ctx.fillText(t,sx(p.x)+11,sy(p.y)-10)}
+function msg(t,k=''){ $('message').textContent=t;$('message').className=k}
+function update(){let hits=points.filter(p=>p.ok).length;$('count').textContent=String(hits).padStart(2,'0')+' / 03';$('attempts').textContent=attempts;$('orbit').disabled=hits===0;$('equationBtn').disabled=!failed}
+function newMission(){
+ let pick=ratios[Math.floor(Math.random()*ratios.length)];[m,n]=pick;d=[3,4,5][Math.floor(Math.random()*3)];calc();
+ points=[];attempts=0;failed=false;orbitOn=false;orbitAngle=0;running=false;timeLeft=45;
+ $('ratioText').textContent=`PA : PB = ${m} : ${n}`;$('aText').textContent=`(${fmt(-d)}, 0)`;$('bText').textContent=`(${d}, 0)`;$('targetText').textContent=(m/n).toFixed(3);
+ $('timer').textContent='45 SEC';$('bar').style.width='100%';$('lastRatio').textContent='—';$('equationBox').classList.remove('show');$('equationBtn').disabled=true;$('start').disabled=false;$('orbit').textContent='궤도 시뮬레이션 재생';
+ $('status').textContent='● SYSTEM READY';$('status').style.color='var(--green)';msg('새 좌표와 거리 비율이 생성됐습니다. 작전을 시작하세요.');update();draw();
+}
+function start(){clearInterval(timer);points=[];attempts=0;failed=false;orbitOn=false;timeLeft=45;running=true;$('start').disabled=true;$('equationBox').classList.remove('show');$('equationBtn').disabled=true;$('status').textContent='● MISSION ACTIVE';$('status').style.color='var(--green)';$('timer').textContent='45 SEC';$('bar').style.width='100%';msg('작전 개시! 목표 비율을 만족하는 점 3개를 포착하세요.');update();draw();timer=setInterval(()=>{timeLeft--;$('timer').textContent=timeLeft+' SEC';$('bar').style.width=(timeLeft/45*100)+'%';if(timeLeft<=0)end(false)},1000)}
+function end(win){running=false;clearInterval(timer);$('start').disabled=false;if(win){$('status').textContent='● TARGET LOCKED';$('status').style.color='var(--green)';msg('미션 성공! 선택한 세 점이 같은 아폴로니우스의 원 위에 놓입니다. 궤도를 재생해 보세요.','good')}else{$('status').textContent='● MISSION FAILED';$('status').style.color='var(--red)';failed=true;$('equationBtn').disabled=false;msg('시간 종료! 다음 단계에서는 수식 모드로 원의 방정식을 구해 볼 수 있습니다.','bad')}update()}
+c.addEventListener('click',e=>{
+ if(!running)return;
+ const rect=c.getBoundingClientRect(),p={x:xmin+(e.clientX-rect.left)/rect.width*(xmax-xmin),y:ymax-(e.clientY-rect.top)/rect.height*(2*ymax)};
+ if(dist(p,A)<.18||dist(p,B)<.18)return;
+ attempts++;let v=ratio(p),ok=Math.abs(v-m/n)<tol;
+ $('lastRatio').textContent=v.toFixed(3);
+ points.push({...p,ok});
+ if(ok){msg(`포착 성공! PA/PB = ${v.toFixed(3)}. 원의 궤도 위 지점입니다.`,'good');}
+ else msg(`조건 불일치. 현재 비율 ${v.toFixed(3)} / 목표 ${ (m/n).toFixed(3)}. 다시 시도하세요.`,'bad');
+ draw();update();if(points.filter(p=>p.ok).length>=3)end(true);
+});
+$('start').onclick=()=>{newMission();start()};
+$('reset').onclick=()=>{clearInterval(timer);newMission()};
+$('orbit').onclick=()=>{orbitOn=!orbitOn;$('orbit').textContent=orbitOn?'궤도 시뮬레이션 정지':'궤도 시뮬레이션 재생';if(orbitOn)animate();else{if(raf)cancelAnimationFrame(raf);draw()}};
+function animate(){if(!orbitOn)return;orbitAngle+=.012;if(orbitAngle>Math.PI*2)orbitAngle-=Math.PI*2;draw();raf=requestAnimationFrame(animate)}
+function showEquation(){
+ let den=n*n-m*m;
+ // n^2 PA^2 = m^2 PB^2
+ let sxcoef=2*d*(n*n+m*m),constcoef=d*d*den;
+ let sign=v=>v<0?'−':'+';
+ let fmtTerm=(coef,name)=>`${Math.abs(coef)}${name}`;
+ let xterm=`${Math.abs(den)}x²`, yterm=`${Math.abs(den)}y²`;
+ let linear=`${Math.abs(sxcoef)}x`,constant=`${Math.abs(constcoef)}`;
+ let equation=`${den<0?'−':''}${xterm} ${den<0?'+':'+'} ${den<0?'−':''}${yterm} ${sign(sxcoef)} ${linear} ${sign(constcoef)} ${constant} = 0`;
+ // use normalized equation and coefficients explicitly
+ let s=`(${n}²)[(x ${d>=0?'+':'−'} ${d})² + y²] = (${m}²)[(x ${d>=0?'−':'+'} ${d})² + y²]`;
+ let term=(v,label)=>v===0?'':`${v<0?' − ':' + '}${Math.abs(v)}${label}`;
+ let expanded=`${den<0?'−':''}${Math.abs(den)}x²${term(den,'y²')}${term(sxcoef,'x')}${term(constcoef,'')} = 0`;
+ $('eqLine1').textContent=s;$('eqLine2').textContent=expanded+'  (정리된 식)';
+ $('equationBox').classList.add('show');$('solverResult').textContent='';msg('수식 모드가 열렸습니다. 식을 정리한 뒤 원 위의 좌표를 찾아 입력해 보세요.','good');
+}
+$('equationBtn').onclick=showEquation;
+$('checkXY').onclick=()=>{
+ let x=Number($('xInput').value),y=Number($('yInput').value);if($('xInput').value===''||$('yInput').value===''){ $('solverResult').textContent='x와 y를 모두 입력하세요.';return}
+ let p={x,y},v=ratio(p),err=Math.abs(v-m/n);
+ if(err<.025){$('solverResult').textContent=`정답! PA/PB = ${v.toFixed(4)}. 원 위의 점입니다.`;$('solverResult').style.color='var(--green)';points.push({...p,ok:true});draw();update()}
+ else{$('solverResult').textContent=`아직 아닙니다. 현재 비율 ${v.toFixed(4)}, 목표 ${ (m/n).toFixed(4)}.`;$('solverResult').style.color='var(--red)'}
+};
+newMission();
+</script></body></html>
